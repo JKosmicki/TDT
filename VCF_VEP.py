@@ -3,7 +3,7 @@
 :File:         VCF_VEP.py
 :OriginalAuthor:   Kamil Slowikowski <kslowikowski@fas.harvard.edu>
 :Edited:       Jack Kosmicki
-:Last updated: January 10, 2015
+:Last updated: January 21, 2015
 
 Make life with VCF files easier.
 
@@ -40,8 +40,6 @@ def parse(line, hashTable):
         return None
 
     # ignore multi-allelics
-    if ',' in FIELDS[3]:
-        return None
     if ',' in FIELDS[4]:
         return None
 
