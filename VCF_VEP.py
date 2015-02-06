@@ -3,7 +3,7 @@
 :File:         VCF_VEP.py
 :OriginalAuthor:   Kamil Slowikowski <kslowikowski@fas.harvard.edu>
 :Edited:       Jack Kosmicki
-:Last updated: January 21, 2015
+:Last updated: February 6, 2015
 
 Make life with VCF files easier.
 
@@ -100,7 +100,6 @@ def parse(line, hashTable):
                     stats['GT'] = find_gtype(stats)
                 else:
                     vcfLine[indivID] = None
-                    print 'AD is none. Does this even get called?'
             except KeyError:
                 sys.stderr.write('Problem with format field: {}.\n'.format(stats))
 
