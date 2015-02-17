@@ -1,7 +1,7 @@
 """
 :File: TDT_CC_VEP.py
 :Author: Jack A. Kosmicki & Kamil Slowikowski
-:Last updated: 2015-01-14
+:Last updated: 2015-02-17
 
 for each variant count the number of transmitted, untransmitted variants in families 
 find variants in cases and controls
@@ -59,13 +59,13 @@ from sets import Set
 from docopt import docopt
 
 
-__version__ = 1.303
+__version__ = 1.31
 __author__ = 'Jack A. Kosmicki <jkosmicki@fas.harvard.edu>'
-__date__ = '01/14/2015'
+__date__ = '02/17/2015'
 
 
 def doTDT(v, family, thresh):
-    """ This function does the Transmission Disequilibrium Test (TDT).
+    """ Perform the Transmission Disequilibrium Test (TDT).
 
     Parameters
     ----------
@@ -126,7 +126,7 @@ def doTDT(v, family, thresh):
                 TU, TU_m, TU_f, mErr, mErr_o, transFlag = numberTransmissions(indiv_data['GT'], father['GT'], mother['GT'], TU, TU_m, TU_f, family[indiv_id][2], True, mErr, mErr_o)
 
             # Update totals
-            AB, N_het, DP, DP_het = updateTotals(AB, N_het, DP, DP_het, indiv_data, father, mother)
+            AB, N_het, Nproband_alt, DP, DP_het = updateTotals(AB, N_het, Nproband_alt, DP, DP_het, indiv_data, father, mother)
 
             if transFlag == True:                      # if the variant was transmitted
                 indivs_T.append(indiv_id)
@@ -258,15 +258,23 @@ def numberTransmissions(kid, dad, mom, TU, TU_m, TU_f, sex, xFlag, mErr, mErr_o)
     return TU, TU_m, TU_f, mErr, mErr_o, transFlag
 
 
-def updateTotals(AB, N_het, DP, DP_het, kid, dad, mom):
+def updateTotals(AB, N_het, Nproband_alt, DP, DP_het, kid, dad, mom):
     """ Update the totals for the following:
     
     Parameters
     ----------
     AB: array of allelic balance
+    N_het: int to count the number of heterozgyous indidividuals.
+    Nproband_alt: int counting the number of homozgyous alternate probands.
     DP: array of depth values for all non heterozygous individuals
     DP_het: array of depth values for all heterozygous individuals
+    kid: child's GT:AD:DP:GQ:PL
+    dad: father's GT:AD:DP:GQ:PL
+    mom: mother's GT:AD:DP:GQ:PL
     """
+
+    if kid['GT'] == 'alt':
+        Nproband_alt += 1
 
     for indiv in (kid, dad, mom):
 
@@ -277,7 +285,7 @@ def updateTotals(AB, N_het, DP, DP_het, kid, dad, mom):
         else:
             DP.append(int(indiv['DP']))
 
-    return AB, N_het, DP, DP_het
+    return AB, N_het, Nproband_alt, DP, DP_het
 
 
 def doCaseControl(v, cases, controls, thresh):
@@ -448,6 +456,7 @@ if __name__ == "__main__":
         # Write out the header.
         writer.write('\t'.join(['AF','AC','AN',
                             'AVG_allelicBalance', 'AVG_Depth', 'AVG_Depth_Het',
+                            'Nproband_HomoAlt',
                             'transmitted','untransmitted',
                             'transmitted_m','untransmitted_m',
                             'transmitted_f','untransmitted_f',
