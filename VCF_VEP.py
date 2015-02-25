@@ -51,12 +51,12 @@ def parse(line, hashTable):
     vcfLine['ALT'] = FIELDS[4]
     vcfLine['QUAL'] = FIELDS[5]
 
-    format = FIELDS[8].split(':')
-    format_len = len(format)
-
-    # apply filters to the line, if true look at the line otherwise move on
-    if 'AD' not in format or 'PL' not in format:
+    # VCF file format must be GT:AD:DP:GQ:PL
+    if FIELDS[8] != 'GT:AD:DP:GQ:PL':
         return None
+    else:
+        format = FIELDS[8].split(':')
+        format_len = len(format)
 
     # INFO field consists of "key1=value;key2=value;...".
     infos = FIELDS[7].split(';')
@@ -92,16 +92,18 @@ def parse(line, hashTable):
             # create a dictionary of GT:AD:DP:GQ:PL
             for i in range(format_len):
                 if ',' in indivAttr[i]:
-                    indivAttr[i] = indivAttr[i].split(',')
+                    try:
+                        indivAttr[i] = map(int, indivAttr[i].split(','))
+                    except ValueError:
+                        vcfLine[indivID] = None
                 stats[format[i]] = indivAttr[i]
-            try:
-                # sometimes AD is none
-                if stats['AD'] != None:
-                    stats['GT'] = find_gtype(stats)
-                else:
-                    vcfLine[indivID] = None
-            except KeyError:
-                sys.stderr.write('Problem with format field: {}.\n'.format(stats))
+
+            # sometimes AD is none
+            if stats['AD'] != '.':
+                stats['GT'] = find_gtype(stats)
+                vcfLine[indivID] = stats
+            else:
+                vcfLine[indivID] = None
 
             vcfLine[indivID] = stats
 
@@ -118,7 +120,7 @@ def find_gtype(stats):
     """
 
     # Throw away individuals with 0 reference and alternate reads.
-    if stats['AD'][0] == '0' and stats['AD'][1] == '0':
+    if stats['AD'][0] == 0 and stats['AD'][1] == 0:
         return None
     elif stats['GT'] in ('0/0', '0|0'):
         return 'homoRef'
