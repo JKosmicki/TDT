@@ -1,7 +1,7 @@
 """
 :File: TDT_CC_VEP.py
 :Author: Jack A. Kosmicki & Kamil Slowikowski
-:Last updated: 2015-02-17
+:Last updated: 2015-02-25
 
 for each variant count the number of transmitted, untransmitted variants in families 
 find variants in cases and controls
@@ -59,9 +59,9 @@ from sets import Set
 from docopt import docopt
 
 
-__version__ = 1.31
+__version__ = 1.311
 __author__ = 'Jack A. Kosmicki <jkosmicki@fas.harvard.edu>'
-__date__ = '02/17/2015'
+__date__ = '02/25/2015'
 
 
 def doTDT(v, family, thresh):
@@ -85,6 +85,7 @@ def doTDT(v, family, thresh):
     mErr = 0            # Count mendelian error: Parents: ref, child: het
     mErr_o = 0          # Count other mendelian errors
     N_het = 0           # Number of heterozygous individuals that passed all thresholds
+    Nproband_alt = 0    # Number of homozygous alt probands that passed all thresholds
     AN = 0              # Number of families that passed all thresholds
     DP_het = []         # Array pf depth of all het individuals who passed filters
     DP = []             # Array of depth of all non-het individuals who passed filters
@@ -150,13 +151,13 @@ def doTDT(v, family, thresh):
         return [v['CHROM'], v['POS'], v['ID'], v['REF'], v['ALT'], 
                 str(v.get('SEVERE_GENE_NAME')), str(v.get('SEVERE_IMPACT')),
                 str(v.get('SIFT')), str(v.get('POLYPHEN')),
-                v['AF'], v['AC'], AN, AB, DP, DP_het,
+                v['AF'], v['AC'], AN, AB, DP, DP_het, Nproband_alt,
                 TU[0], TU[1], TU_m[0], TU_m[1], TU_f[0], TU_f[1], 
                 mErr, mErr_o, mendErrorPercent], indivs_T, indivs_U
     else:
         # str() is called on some variables as they can be NONE producing a type error.
         return [v['CHROM'], v['POS'], v['ID'], v['REF'], v['ALT'], 
-                v['AF'], v['AC'], AN, AB, DP, DP_het,
+                v['AF'], v['AC'], AN, AB, DP, DP_het, Nproband_alt,
                 TU[0], TU[1], TU_m[0], TU_m[1], TU_f[0], TU_f[1], 
                 mErr, mErr_o, mendErrorPercent], indivs_T, indivs_U
 
@@ -273,7 +274,7 @@ def updateTotals(AB, N_het, Nproband_alt, DP, DP_het, kid, dad, mom):
     mom: mother's GT:AD:DP:GQ:PL
     """
 
-    if kid['GT'] == 'alt':
+    if kid['GT'] == 'homoAlt':
         Nproband_alt += 1
 
     for indiv in (kid, dad, mom):
