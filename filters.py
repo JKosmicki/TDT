@@ -1,7 +1,7 @@
 """
 :File: filters.py
 :Author: Jack A. Kosmicki
-:Last updated: 2014-12-01
+:Last updated: 2015-02-25
 
 File of filters for quality control of VCF files
 Additional filters for determining Par regions
@@ -76,36 +76,31 @@ def TDT_Parent_Filters(indiv, father, mother, thresh):
         False = parents don't have alternate allele or did not pass filters
     """
 
-    # 1) find the parents' data 
-    try:
-        if father == None or mother == None:
-            return False
-        else:
-            # Find the parent's GT:AD:DP:GQ:PL numbers
-            dad_data, mom_data = father, mother
-
-            dad_gtype, mom_gtype = dad_data['GT'], mom_data['GT']
-
-            # determine the status of the phred Filter which will be either 
-            # True (they passed) or False (they didn't pass)
-            dad_Phred_Pass = PhredScaleFilter(dad_gtype, dad_data, thresh['PL_Thresh'])
-            mom_Phred_Pass = PhredScaleFilter(mom_gtype, mom_data, thresh['PL_Thresh'])
-
-            # 2) apply allelic balance filters to parents
-            #    Both parents must pass all the filters
-            if not passFilters(dad_data, thresh, thresh['GQ_Parent_Thresh']) or not passFilters(mom_data, thresh, thresh.get('GQ_Parent_Thresh')):
-                return False
-
-            # 3) apply PL filter to parents
-            elif not dad_Phred_Pass or not mom_Phred_Pass:
-                return False
-
-            else:
-                return True
-    except KeyError:
-        sys.stderr.write("KeyError with individual {}".format(indiv))
+    # 1) find the parents' data
+    if father == None or mother == None:
         return False
+    else:
+        # Find the parent's GT:AD:DP:GQ:PL numbers
+        dad_data, mom_data = father, mother
 
+        dad_gtype, mom_gtype = dad_data['GT'], mom_data['GT']
+
+        # determine the status of the phred Filter which will be either 
+        # True (they passed) or False (they didn't pass)
+        dad_Phred_Pass = PhredScaleFilter(dad_gtype, dad_data, thresh['PL_Thresh'])
+        mom_Phred_Pass = PhredScaleFilter(mom_gtype, mom_data, thresh['PL_Thresh'])
+
+        # 2) apply allelic balance filters to parents
+        #    Both parents must pass all the filters
+        if not passFilters(dad_data, thresh, thresh['GQ_Parent_Thresh']) or not passFilters(mom_data, thresh, thresh.get('GQ_Parent_Thresh')):
+            return False
+
+        # 3) apply PL filter to parents
+        elif not dad_Phred_Pass or not mom_Phred_Pass:
+            return False
+
+        else:
+            return True
 
 def AllelicBalance(AD):
     """ Calculate the allelic balance.
@@ -114,8 +109,8 @@ def AllelicBalance(AD):
                            alternate reads + reference reads
     """
     
-    ref = int(AD[0])
-    alt = int(AD[1])
+    ref = AD[0]
+    alt = AD[1]
 
     return alt / (ref + alt)
 
@@ -145,9 +140,9 @@ def PhredScaleFilter_HET(stats, PL_Thresh):
         False = Failed Filter
     """
 
-    homoRef = int(stats['PL'][0])
-    het = int(stats['PL'][1])
-    homoAlt = int(stats['PL'][2])
+    homoRef = stats['PL'][0]
+    het = stats['PL'][1]
+    homoAlt = stats['PL'][2]
 
     if homoRef < PL_Thresh:
         return False
@@ -168,9 +163,9 @@ def PhredScaleFilter_HOMOREF(stats, PL_Thresh):
         False = Failed Filter
     """
 
-    homoRef = int(stats['PL'][0])
-    het = int(stats['PL'][1])
-    homoAlt = int(stats['PL'][2])
+    homoRef = stats['PL'][0]
+    het = stats['PL'][1]
+    homoAlt = stats['PL'][2]
 
     if homoRef != 0:
         return False
@@ -191,9 +186,9 @@ def PhredScaleFilter_HOMOALT(stats, PL_Thresh):
         False = Failed Filter
     """
 
-    homoRef = int(stats['PL'][0])
-    het = int(stats['PL'][1])
-    homoAlt = int(stats['PL'][2])
+    homoRef = stats['PL'][0]
+    het = stats['PL'][1]
+    homoAlt = stats['PL'][2]
 
     if homoAlt != 0:
         return False
