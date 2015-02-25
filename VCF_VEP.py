@@ -3,7 +3,7 @@
 :File:         VCF_VEP.py
 :OriginalAuthor:   Kamil Slowikowski <kslowikowski@fas.harvard.edu>
 :Edited:       Jack Kosmicki
-:Last updated: February 6, 2015
+:Last updated: February 25, 2015
 
 Make life with VCF files easier.
 
