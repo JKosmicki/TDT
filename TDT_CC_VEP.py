@@ -445,6 +445,8 @@ if __name__ == "__main__":
     writer = open(args['<outputFile_Name>'], 'wb')
     writer.write('\t'.join(['CHROM','POSITION','ID','REF','ALT']) + '\t')
 
+    fn_open = gzip.open if args['<vcf_File>'].endswith('.gz') else open
+
     if args['--ano']:
         writer.write('\t'.join(['GENE_NAME','FUNCTIONAL_CLASS','SIFT','PolyPhen2']) + '\t')
 
@@ -467,9 +469,6 @@ if __name__ == "__main__":
         writer2.write('\t'.join(['CHROM','POSITION','ID','REF','ALT']) + '\n')
         writer3.write('\t'.join(['CHROM','POSITION','ID','REF','ALT']) + '\n')
 
-        fn_open = gzip.open if args['<vcf_File>'].endswith('.gz') else open
-        indivs = []
-
         with fn_open(args['<vcf_File>']) as fh:
             for line in fh:
                 line = line.rstrip('\r\n').rstrip('\n').rstrip('\t')
@@ -486,7 +485,7 @@ if __name__ == "__main__":
                         writer3.write('\t'.join(map(str,result[2])) + '\n')
 
         pr.disable()
-        s= StringIO.StringIO()
+        s = StringIO.StringIO()
         sortby = 'cumulative'
         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
         ps.print_stats()
@@ -497,9 +496,6 @@ if __name__ == "__main__":
         # Write out the header.
         writer.write('\t'.join(['AF','AC','AN', 
                          'caseRefs','caseAlts','controlRefs','controlAlts']) + '\n')
-
-        fn_open = gzip.open if args['<vcf_File>'].endswith('.gz') else open
-        indivs = []
 
         with fn_open(args['<vcf_File>']) as fh:
             for line in fh:
