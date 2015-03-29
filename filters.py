@@ -13,15 +13,26 @@ import sys
 
 def passFilters(stats, thresh, GQ_Thresh):
     """ Series of filters used to remove bad calls.
-        stats are the individuals values (GT:AD:DP:GQ:PL)
-        AD: allelic depth
-        DP: approximate number of reads that passed the filter
-        GQ: genotype quality
-        PL: phred quality score
 
-        We allow case/controls, parents, and kids to have different GQ thresholds, 
-        therefore to make a generic function GQ_Thresh is specified despite all 
-        three GQ thresholds being located in the hash table 'thresh'
+        We allow case/controls, parents, and kids to have different GQ thresholds,
+        therefore to make a generic function GQ_Thresh is specified despite all
+        three GQ thresholds being located in the hash table 'thresh'.
+
+        Parameters
+        ----------
+        stats: individual's values (GT:AD:DP:GQ:PL)
+            GT: Genotype (Ref, Het, Alt)
+            AD: Allelic Depth
+            DP: Number of reads that passed the filters (sum of AD)
+            GQ: Genotype Quality
+            PL: Phred Quality Score
+        thresh: hash table of threshold values
+        GQ_Thresh: (int) minimum GQ threshold
+
+        Returns
+        -------
+        True: Individual passed the filters.
+        False: Individual failed the filters.
     """
 
     genotype = stats['GT']
