@@ -1,7 +1,7 @@
 """
 :File: filters.py
 :Author: Jack A. Kosmicki
-:Last updated: 2015-02-25
+:Last updated: 2015-03-28
 
 File of filters for quality control of VCF files
 Additional filters for determining Par regions
@@ -17,7 +17,7 @@ def passFilters(stats, thresh, GQ_Thresh):
         AD: allelic depth
         DP: approximate number of reads that passed the filter
         GQ: genotype quality
-        PL: phred scale score
+        PL: phred quality score
 
         We allow case/controls, parents, and kids to have different GQ thresholds, 
         therefore to make a generic function GQ_Thresh is specified despite all 
@@ -72,6 +72,9 @@ def TDT_Parent_Filters(indiv, father, mother, thresh):
         family = dictionary containing the families
             key = child's ID 
             value = [Dad ID, Mom ID, sex]
+        
+        Returns
+        -------
         True = parents have alternate allele and passed filters
         False = parents don't have alternate allele or did not pass filters
     """
@@ -119,7 +122,11 @@ def PhredScaleFilter(gtype, stats, PL_Thresh):
     """ This function determines what phred scale filter to use for
         a given individual as different genotypes require
         different filters
-        Input: genotype, GT:AD:DP:GQ:PL values, the PL threshold
+        
+        Parameters
+        ----------
+        stats: GT:AD:DP:GQ:PL values
+        PL_Thresh: (int) the minimum Phred Quality Score threshold
     """
 
     if gtype == 'homoRef':
@@ -133,11 +140,19 @@ def PhredScaleFilter(gtype, stats, PL_Thresh):
 
 
 def PhredScaleFilter_HET(stats, PL_Thresh):
-    """ Apply filters for the normalized Phred-scaled likelihoods for 
-        AA, AB, BB genotypes where A = reference allele, B = alternate allele
-        stats is the GT:AD:DP:GQ:PL scores
-        True = Passed Filter
-        False = Failed Filter
+    """ Apply filters for the normalized Phred Quality Scores for
+        AA, AB, BB genotypes where A = reference allele,
+                                   B = alternate allele
+                                   
+        Parameters
+        ----------
+        stats: GT:AD:DP:GQ:PL values
+        PL_Thresh: (int) the minimum Phred Quality Score threshold
+
+        Returns
+        -------
+        True: Passed Filter
+        False: Failed Filter
     """
 
     homoRef = stats['PL'][0]
@@ -155,12 +170,19 @@ def PhredScaleFilter_HET(stats, PL_Thresh):
 
 
 def PhredScaleFilter_HOMOREF(stats, PL_Thresh):
-    """ Apply filters for the normalized Phred-scaled likelihoods for 
+    """ Apply filters for the normalized Phred Quality Scores for
         AA, AB, BB genotypes where A = reference allele,
                                    B = alternate allele
-        stats is the GT:AD:DP:GQ:PL scores
-        True = Passed Filter
-        False = Failed Filter
+                                   
+        Parameters
+        ----------
+        stats: GT:AD:DP:GQ:PL values
+        PL_Thresh: (int) the minimum Phred Quality Score threshold
+
+        Returns
+        -------
+        True: Passed Filter
+        False: Failed Filter
     """
 
     homoRef = stats['PL'][0]
@@ -178,12 +200,19 @@ def PhredScaleFilter_HOMOREF(stats, PL_Thresh):
 
 
 def PhredScaleFilter_HOMOALT(stats, PL_Thresh):
-    """ Apply filters for the normalized Phred-scaled likelihoods for 
+    """ Apply filters for the normalized Phred Quality Scores for
         AA, AB, BB genotypes where A = reference allele,
                                    B = alternate allele
-        stats is the GT:AD:DP:GQ:PL scores
-        True = Passed Filter
-        False = Failed Filter
+                                   
+        Parameters
+        ----------
+        stats: GT:AD:DP:GQ:PL values
+        PL_Thresh: (int) the minimum Phred Quality Score threshold
+
+        Returns
+        -------
+        True: Passed Filter
+        False: Failed Filter
     """
 
     homoRef = stats['PL'][0]
