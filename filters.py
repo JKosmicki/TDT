@@ -12,7 +12,7 @@ import sys
 
 
 def passFilters(stats, thresh, GQ_Thresh):
-    """series of filters used to remove bad calls
+    """ Series of filters used to remove bad calls.
         stats are the individuals values (GT:AD:DP:GQ:PL)
         AD: allelic depth
         DP: approximate number of reads that passed the filter
