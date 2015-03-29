@@ -421,6 +421,7 @@ def Counts(indivAttr, Refcount, Altcount, parFlag):
 
 if __name__ == "__main__":
     args = docopt(__doc__, version='0.1')
+    print(args)
 
     # GLOBAL VARIABLES
     # case and control are hash tables with:
@@ -443,7 +444,7 @@ if __name__ == "__main__":
 
     writer = open(args['<outputFile_Name>'], 'wb')
     writer.write('\t'.join(['CHROM','POSITION','ID','REF','ALT']) + '\t')
-    
+
     if args['--ano']:
         writer.write('\t'.join(['GENE_NAME','FUNCTIONAL_CLASS','SIFT','PolyPhen2']) + '\t')
 
@@ -465,8 +466,6 @@ if __name__ == "__main__":
                             'Percent_of_Mendel_Errors']) + '\n')
         writer2.write('\t'.join(['CHROM','POSITION','ID','REF','ALT']) + '\n')
         writer3.write('\t'.join(['CHROM','POSITION','ID','REF','ALT']) + '\n')
-
-        print(args)
 
         fn_open = gzip.open if args['<vcf_File>'].endswith('.gz') else open
         indivs = []
@@ -498,8 +497,6 @@ if __name__ == "__main__":
         # Write out the header.
         writer.write('\t'.join(['AF','AC','AN', 
                          'caseRefs','caseAlts','controlRefs','controlAlts']) + '\n')
-
-        print(args)
 
         fn_open = gzip.open if args['<vcf_File>'].endswith('.gz') else open
         indivs = []
