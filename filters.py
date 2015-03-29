@@ -256,9 +256,17 @@ def check_Hemizgyous(chrom,gender,inParRegion):
 
 def inPar(pos):
     """ Are you in the pseudo-autosomal region (PAR)?
-        True: in par               False: not in par
 
-        Current PAR regions defined in GRCh37 from 
+        Current PAR regions defined in GRCh37 from
         http://www.ncbi.nlm.nih.gov/projects/genome/assembly/grc/human/
+
+        Parameters
+        ----------
+        pos: (int) position of the variant
+
+        Returns
+        -------
+        True: in par               False: not in par
     """
+
     return (60001 <= pos <= 2699520) or (154931044 <= pos <= 155260560)
