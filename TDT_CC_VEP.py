@@ -1,7 +1,7 @@
 """
 :File: TDT_CC_VEP.py
 :Author: Jack A. Kosmicki & Kamil Slowikowski
-:Last updated: 2015-02-25
+:Last updated: 2015-03-30
 
 for each variant count the number of transmitted, untransmitted variants in families 
 find variants in cases and controls
@@ -59,9 +59,9 @@ from sets import Set
 from docopt import docopt
 
 
-__version__ = 1.311
+__version__ = 1.312
 __author__ = 'Jack A. Kosmicki <jkosmicki@fas.harvard.edu>'
-__date__ = '02/25/2015'
+__date__ = '03/30/2015'
 
 
 def doTDT(v, family, thresh):
@@ -474,11 +474,11 @@ if __name__ == "__main__":
                 line = line.rstrip('\r\n').rstrip('\n').rstrip('\t')
                 if line.startswith('#CHROM'):
                     indivs = line.split('\t')[9:]  # individual IDs in the VCF
-                    familyRelations, vcfIndivs = FamilyPed.readFamily(args['<ped_File>'], indivs)
+                    pedigree, vcfIndivs = FamilyPed.readFamily(args['<ped_File>'], indivs)
                 if line.startswith('#'):
                     continue
                 else:
-                    result = doTDT(VCF_VEP.parse(line, vcfIndivs), familyRelations, hashThresholds)
+                    result = doTDT(VCF_VEP.parse(line, vcfIndivs), pedigree, hashThresholds)
                     if result:
                         writer.write('\t'.join(map(str,result[0])) + '\n')
                         writer2.write('\t'.join(map(str,result[1])) + '\n')
