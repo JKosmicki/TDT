@@ -31,8 +31,8 @@ def readFamily(Ped_File, vcfIndivs, aff_Flag):
         phenotype: 1=unaffected, 2=affected
     
     vcfIndivs: Array of individuals in the vcf file.
-    aff_Flag: Boolean indicating whether TDT is run on affected or unaffected individuals
-        True: affected    False: unaffected
+    unaff_Flag: Boolean indicating whether TDT is run on affected/unaffected individuals
+        True: unaffected    False: affected
     """
 
     family = {}     # family hash table:    Key = ID   Value = (Father ID, Mother ID, Sex)
@@ -74,7 +74,7 @@ def readFamily(Ped_File, vcfIndivs, aff_Flag):
                 continue
 
             # If we only want affected probands.
-            if flag:
+            if not unaff_Flag:
                 if field[5] != '2':
                     continue
             # If we are only looking at unaffected probands.
