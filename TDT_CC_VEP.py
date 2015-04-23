@@ -1,7 +1,7 @@
 """
 :File: TDT_CC_VEP.py
 :Author: Jack A. Kosmicki & Kamil Slowikowski
-:Last updated: 2015-03-30
+:Last updated: 2015-04-23
 
 for each variant count the number of transmitted, untransmitted variants in families 
 find variants in cases and controls
@@ -474,7 +474,8 @@ if __name__ == "__main__":
                 line = line.rstrip('\r\n').rstrip('\n').rstrip('\t')
                 if line.startswith('#CHROM'):
                     indivs = line.split('\t')[9:]  # individual IDs in the VCF
-                    pedigree, vcfIndivs = FamilyPed.readFamily(args['<ped_File>'], indivs)
+                    pedigree, vcfIndivs = FamilyPed.readFamily(args['<ped_File>']
+                                                               indivs, args['--unaff'])
                 if line.startswith('#'):
                     continue
                 else:
