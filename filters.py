@@ -1,10 +1,10 @@
 """
 :File: filters.py
 :Author: Jack A. Kosmicki
-:Last updated: 2015-03-28
+:Last updated: 2015-04-23
 
-File of filters for quality control of VCF files
-Additional filters for determining Par regions
+File of filters for quality control of VCF files.
+Additional filters for determining Par regions.
 """
 
 from __future__ import division
@@ -15,7 +15,7 @@ def passFilters(stats, thresh, GQ_Thresh):
     """ Series of filters used to remove bad calls.
 
         We allow case/controls, parents, and kids to have different GQ thresholds,
-        therefore to make a generic function GQ_Thresh is specified despite all
+        therefore to make a generic function, GQ_Thresh is specified despite all
         three GQ thresholds being located in the hash table 'thresh'.
 
         Parameters
