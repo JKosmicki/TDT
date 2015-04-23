@@ -3,7 +3,7 @@
 :Author: Jack A. Kosmicki & Kamil Slowikowski
 :Last updated: 2015-04-23
 
-for each variant count the number of transmitted, untransmitted variants in families 
+for each variant count the number of transmitted, untransmitted variants in families
 find variants in cases and controls
 
 Steps:
@@ -15,9 +15,9 @@ Steps:
 6)  Upon passing the filters, examine each individual in the VCF
 7)  For doTDT, only look at the probands (ignore cases/controls/parents)
 8)  Apply filters to the proband
-9)  If the proband passes the filters, apply filters to 
+9)  If the proband passes the filters, apply filters to
     the parents and determine transmission
-10) After determining transmission, update the number of 
+10) After determining transmission, update the number of
     transmitted and untransmitted variants
 11) Print out the number of transmissions and untransmissions
 
@@ -35,8 +35,9 @@ Options:
     --gq_Kid=GQ_KID_VAL  GQ threshold for child [default: 30]
     --gq_CC=GQ_CC_VAL    GQ threshold for cases and controls [default: 30]
     --ano                Pull VEP annotations. Default is false.
-    -h, --help           Print this message and exit.
-    -v, --version        Print the version and exit.
+    --unaff              Examine unaffected probands (doTDT only). default is False
+    -h, --help           Show this message and exit.
+    -v, --version        Show the version and exit.
 
 6/27/2014: added AN count in TDT so we can count this up in the blasted daly vcfs
 6/30/2014: added AN in case/control as well
@@ -59,9 +60,9 @@ from sets import Set
 from docopt import docopt
 
 
-__version__ = 1.312
+__version__ = 1.315
 __author__ = 'Jack A. Kosmicki <jkosmicki@fas.harvard.edu>'
-__date__ = '03/30/2015'
+__date__ = '04/23/2015'
 
 
 def doTDT(v, family, thresh):
@@ -71,7 +72,7 @@ def doTDT(v, family, thresh):
     ----------
     v: line of the VCF
     family is a hash table with:
-        Key: individual id      Value: [father id, mother id, sex]   
+        Key: individual id      Value: [father id, mother id, sex]
     thresh: hash table of thresholds
     """
 
@@ -94,7 +95,6 @@ def doTDT(v, family, thresh):
     indivs_U = [v['CHROM'], v['POS'], v['ID'], v['REF'], v['ALT']]       # Array of individuals who did not receive the variant
 
     for indiv_id in family.keys():         #loop through all the probands
-
         # indiv_data is their GT:AD:DP:GQ:PL stats
         indiv_data = v[indiv_id]
 
@@ -106,19 +106,20 @@ def doTDT(v, family, thresh):
             continue
 
         # Apply PL filter to child.
-        if not filters.PhredScaleFilter(indiv_data['GT'], indiv_data, thresh['PL_Thresh']):
+        if not filters.PhredScaleFilter(indiv_data, thresh['PL_Thresh']):
             continue
 
         father = v[family[indiv_id][0]]
         mother = v[family[indiv_id][1]]
 
-        # Check if the parents have the alternate allele 
+        # Check if the parents have the alternate allele
         # so they can pass it on AND apply quality control filters.
-        if filters.TDT_Parent_Filters(indiv_data, father, mother, thresh):
+        if filters.TDT_Parent_Filters(father, mother, thresh):
             AN += 1         # all individuals in the nuclear family passed the filters
 
             # TDT operates differently in the hemizygous chromosomes
-            # PAR regions defined from http://www.ncbi.nlm.nih.gov/projects/genome/assembly/grc/human/
+            # PAR regions defined from
+            # http://www.ncbi.nlm.nih.gov/projects/genome/assembly/grc/human/
             # in this case we are in the Par region so transmission is normal
             if filters.check_Hemizgyous(v['CHROM'], family[indiv_id][2], filters.inPar(v['POS'])):
                 TU, TU_m, TU_f, mErr, mErr_o, transFlag = numberTransmissions(indiv_data['GT'], father['GT'], mother['GT'], TU, TU_m, TU_f, family[indiv_id][2], False, mErr, mErr_o)
@@ -129,10 +130,10 @@ def doTDT(v, family, thresh):
             # Update totals
             AB, N_het, Nproband_alt, DP, DP_het = updateTotals(AB, N_het, Nproband_alt, DP, DP_het, indiv_data, father, mother)
 
-            if transFlag == True:                      # if the variant was transmitted
-                indivs_T.append(indiv_id)
+            if transFlag == True:               # if the variant was transmitted
+                indivs_T.extend((indiv_id, indiv_data, family[indiv_id][0], father, family[indiv_id][1], mother))
             elif transFlag == False:
-                indivs_U.append(indiv_id)
+                indivs_U.extend((indiv_id, indiv_data, family[indiv_id][0], father, family[indiv_id][1], mother))
 
     # Ignore the cases in which we have 0 transmissions and 0 untransmissions.
     if TU[0] + TU[1] == 0:
@@ -148,26 +149,26 @@ def doTDT(v, family, thresh):
 
     if args['--ano']:
         # str() is called on some variables as they can be NONE producing a type error.
-        return [v['CHROM'], v['POS'], v['ID'], v['REF'], v['ALT'], 
+        return [v['CHROM'], v['POS'], v['ID'], v['REF'], v['ALT'],
                 str(v.get('SEVERE_GENE_NAME')), str(v.get('SEVERE_IMPACT')),
                 str(v.get('SIFT')), str(v.get('POLYPHEN')),
                 v['AF'], v['AC'], AN, AB, DP, DP_het, Nproband_alt,
-                TU[0], TU[1], TU_m[0], TU_m[1], TU_f[0], TU_f[1], 
+                TU[0], TU[1], TU_m[0], TU_m[1], TU_f[0], TU_f[1],
                 mErr, mErr_o, mendErrorPercent], indivs_T, indivs_U
     else:
-        # str() is called on some variables as they can be NONE producing a type error.
-        return [v['CHROM'], v['POS'], v['ID'], v['REF'], v['ALT'], 
+        return [v['CHROM'], v['POS'], v['ID'], v['REF'], v['ALT'],
                 v['AF'], v['AC'], AN, AB, DP, DP_het, Nproband_alt,
-                TU[0], TU[1], TU_m[0], TU_m[1], TU_f[0], TU_f[1], 
+                TU[0], TU[1], TU_m[0], TU_m[1], TU_f[0], TU_f[1],
                 mErr, mErr_o, mendErrorPercent], indivs_T, indivs_U
 
+
 def numberTransmissions(kid, dad, mom, TU, TU_m, TU_f, sex, xFlag, mErr, mErr_o):
-    """ 
+    """
     Determine the number of transmissions and nontransmissions.
-    The X chromosome is different for males so xFlag indicates 
+    The X chromosome is different for males so xFlag indicates
          if we should examine those unique cases (which otherwise
          are Mendelian errors).
-    
+
     Series of cases:
     Kid Dad Mom Transmissions   Untransmissions
     Ref Het Het 0               2
@@ -177,7 +178,7 @@ def numberTransmissions(kid, dad, mom, TU, TU_m, TU_f, sex, xFlag, mErr, mErr_o)
     Het Alt Het 0               1
     Alt Het Het 2               0
     Alt Het Alt 1               0
-    
+
       - - X CHROM specific cases - -
     Ref Het Het 0               1
     Ref Ref Het 0               1
@@ -261,7 +262,7 @@ def numberTransmissions(kid, dad, mom, TU, TU_m, TU_f, sex, xFlag, mErr, mErr_o)
 
 def updateTotals(AB, N_het, Nproband_alt, DP, DP_het, kid, dad, mom):
     """ Update the totals for the following:
-    
+
     Parameters
     ----------
     AB: array of allelic balance
@@ -342,7 +343,7 @@ def doCaseControl(v, cases, controls, thresh):
 
     if (caseAlts + controlAlts == 0) | (caseRefs + controlRefs == 0):
         return None
-    
+
     AC = caseAlts + controlAlts
     AN = AC + caseRefs + controlRefs
     AF = AC / AN
@@ -372,7 +373,7 @@ def ProcessCC(indivAttr, thresh):
         return False
 
     # Apply PL filter to individual.
-    if not filters.PhredScaleFilter(indivAttr['GT'], indivAttr, thresh['PL_Thresh']):
+    if not filters.PhredScaleFilter(indivAttr, thresh['PL_Thresh']):
         return False
 
     return True
@@ -420,13 +421,13 @@ def Counts(indivAttr, Refcount, Altcount, parFlag):
 
 
 if __name__ == "__main__":
-    args = docopt(__doc__, version='0.1')
+    args = docopt(__doc__, version='0.6.1')
     print(args)
 
     # GLOBAL VARIABLES
-    # case and control are hash tables with:
+    # Case and control are hash tables with:
     #   Key: individual id      Value: gender
-    # family is a hash table with:
+    # Family is a hash table with:
     #   Key: individual id      Value: [father id, mother id, sex]
 
     # Hash table of thresholds
@@ -448,7 +449,7 @@ if __name__ == "__main__":
     fn_open = gzip.open if args['<vcf_File>'].endswith('.gz') else open
 
     if args['--ano']:
-        writer.write('\t'.join(['GENE_NAME','FUNCTIONAL_CLASS','SIFT','PolyPhen2']) + '\t')
+        writer.write('\t'.join(['GENE_NAME','FUNCTIONAL_CLASS','SIFT','PolyPhen2'])+'\t')
 
     if args['doTDT']:
         pr = cProfile.Profile()
@@ -474,7 +475,7 @@ if __name__ == "__main__":
                 line = line.rstrip('\r\n').rstrip('\n').rstrip('\t')
                 if line.startswith('#CHROM'):
                     indivs = line.split('\t')[9:]  # individual IDs in the VCF
-                    pedigree, vcfIndivs = FamilyPed.readFamily(args['<ped_File>']
+                    pedigree, vcfIndivs = FamilyPed.readFamily(args['<ped_File>'],
                                                                indivs, args['--unaff'])
                 if line.startswith('#'):
                     continue
@@ -495,7 +496,7 @@ if __name__ == "__main__":
     elif args['doCaseControl']:
 
         # Write out the header.
-        writer.write('\t'.join(['AF','AC','AN', 
+        writer.write('\t'.join(['AF','AC','AN',
                          'caseRefs','caseAlts','controlRefs','controlAlts']) + '\n')
 
         with fn_open(args['<vcf_File>']) as fh:
