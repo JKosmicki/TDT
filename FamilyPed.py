@@ -1,29 +1,38 @@
 """
 :File: FamilyPed.py
 :Author: Jack A. Kosmicki
-:Last updated: 2014-12-17
+:Last updated: 2015-04-23
 
-FamilyPed.py deals with reading in the family relations file (.ped file)
-It stores the family relationships into three hash tables, one for trios, 
-    one for cases, and one for controls.  An additional final hash table 
-    contains all of the case/control or trio individuals and their index in the vcf.
+FamilyPed.py reads in the Pedigree file (.ped file).
+
+The .ped file must be tab delimited ('\t') and contain the following 5 columns in this order:
+    family_ID   indiv_ID    father_ID   mother_ID   sex     affected_Status
+See http://pngu.mgh.harvard.edu/~purcell/plink/data.shtml for more information.
+
+FamilyPed.py stores the family relationships into three hash tables, one for trios,
+    one for cases, and one for controls.  An additional hash table contains all 
+    of the case/control or trio individuals and their index in the vcf to enable 
+    faster lookup.
 """
+
 
 import sys
 from sets import Set
 
 
-def readFamily(Ped_File, vcfIndivs):
+def readFamily(Ped_File, vcfIndivs, aff_Flag):
     """ Read in the pedigree file for the trios (.ped file).
 
     Parameters
     ----------
-    Ped_File: pedigree file (.ped) of the individuals in the vcf.
+    Ped_File: Pedigree file (.ped) of the individuals in the vcf.
         columns = FamilyID, IndividualID, dadID, momID, sex, phenotype
         sex: 1=male, 2=female, 3=unknown
         phenotype: 1=unaffected, 2=affected
     
-    vcfIndivs: array of individuals in the vcf file.
+    vcfIndivs: Array of individuals in the vcf file.
+    aff_Flag: Boolean indicating whether TDT is run on affected or unaffected individuals
+        True: affected    False: unaffected
     """
 
     family = {}     # family hash table:    Key = ID   Value = (Father ID, Mother ID, Sex)
@@ -64,6 +73,15 @@ def readFamily(Ped_File, vcfIndivs):
                 sys.stderr.write('Family {} is incomplete.\n'.format(family_ID))
                 continue
 
+            # If we only want affected probands.
+            if flag:
+                if field[5] != '2':
+                    continue
+            # If we are only looking at unaffected probands.
+            else:
+                if field[5] != '1':
+                    continue
+
             # Family dictionary is in the form: {child_ID} = [Dad_ID, Mom_ID, Sex]    
             family[indiv_ID] = (father_ID, mother_ID, sex)
             indivs[indiv_ID] = vcfIndivs.index(indiv_ID) 
@@ -80,11 +98,11 @@ def readCC(Ped_File, vcfIndivs):
     Parameters
     ----------
     Ped_File: pedigree file (.ped) of the individuals in the vcf.
-        columns = FamilyID, IndividualID, dadID, momID, sex, phenotype
+        columns: FamilyID, IndividualID, dadID, momID, sex, phenotype
         sex: 1=male, 2=female, 3=unknown
         phenotype: 1=unaffected, 2=affected
     
-    vcfIndivs: array of individuals in the vcf file.
+    vcfIndivs: Array of individuals in the vcf file.
     """
 
     case = {}         # case hash table:     Key = ID   Value = Sex
