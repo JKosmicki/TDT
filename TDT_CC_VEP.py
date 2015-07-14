@@ -39,8 +39,6 @@ Options:
     -h, --help           Show this message and exit.
     -v, --version        Show the version and exit.
 
-6/27/2014: added AN count in TDT so we can count this up in the blasted daly vcfs
-6/30/2014: added AN in case/control as well
 """
 
 
