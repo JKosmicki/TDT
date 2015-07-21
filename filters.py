@@ -1,7 +1,7 @@
 """
 :File: filters.py
 :Author: Jack A. Kosmicki
-:Last updated: 2015-04-23
+:Last updated: 2015-07-14
 
 File of filters for quality control of VCF files.
 Additional filters for determining Par regions.
@@ -74,16 +74,15 @@ def passFilters(stats, thresh, GQ_Thresh):
             return True
 
 
-def TDT_Parent_Filters(indiv, father, mother, thresh):
+def TDT_Parent_Filters(father, mother, thresh):
     """ Determine if parents have an alternate allele to pass on.
-        
+
         Parameters
         ----------
-        indiv = individual's ID
-        family = dictionary containing the families
-            key = child's ID 
-            value = [Dad ID, Mom ID, sex]
-        
+        father: GT:AD:DP:GQ:PL values
+        mother: GT:AD:DP:GQ:PL values
+        thresh: hash table of threshold values
+
         Returns
         -------
         True = parents have alternate allele and passed filters
@@ -94,19 +93,15 @@ def TDT_Parent_Filters(indiv, father, mother, thresh):
     if father == None or mother == None:
         return False
     else:
-        # Find the parent's GT:AD:DP:GQ:PL numbers
-        dad_data, mom_data = father, mother
 
-        dad_gtype, mom_gtype = dad_data['GT'], mom_data['GT']
-
-        # determine the status of the phred Filter which will be either 
+        # determine the status of the phred Filter which will be either
         # True (they passed) or False (they didn't pass)
-        dad_Phred_Pass = PhredScaleFilter(dad_gtype, dad_data, thresh['PL_Thresh'])
-        mom_Phred_Pass = PhredScaleFilter(mom_gtype, mom_data, thresh['PL_Thresh'])
+        dad_Phred_Pass = PhredScaleFilter(father, thresh['PL_Thresh'])
+        mom_Phred_Pass = PhredScaleFilter(mother, thresh['PL_Thresh'])
 
         # 2) apply allelic balance filters to parents
         #    Both parents must pass all the filters
-        if not passFilters(dad_data, thresh, thresh['GQ_Parent_Thresh']) or not passFilters(mom_data, thresh, thresh.get('GQ_Parent_Thresh')):
+        if not passFilters(father, thresh, thresh['GQ_Parent_Thresh']) or not passFilters(mother, thresh, thresh.get('GQ_Parent_Thresh')):
             return False
 
         # 3) apply PL filter to parents
@@ -116,29 +111,35 @@ def TDT_Parent_Filters(indiv, father, mother, thresh):
         else:
             return True
 
+
 def AllelicBalance(AD):
     """ Calculate the allelic balance.
                                     alternate reads
         allelic balance = -----------------------------------
                            alternate reads + reference reads
+
+        Parameters
+        ----------
+        AD: Array of integers [Number of Reference Reads, Number of Alternate Reads]
     """
-    
     ref = AD[0]
     alt = AD[1]
 
     return alt / (ref + alt)
 
 
-def PhredScaleFilter(gtype, stats, PL_Thresh):
+def PhredScaleFilter(stats, PL_Thresh):
     """ This function determines what phred scale filter to use for
         a given individual as different genotypes require
         different filters
-        
+
         Parameters
         ----------
         stats: GT:AD:DP:GQ:PL values
         PL_Thresh: (int) the minimum Phred Quality Score threshold
     """
+
+    gtype = stats['GT']
 
     if gtype == 'homoRef':
         return PhredScaleFilter_HOMOREF(stats, PL_Thresh)
@@ -154,7 +155,7 @@ def PhredScaleFilter_HET(stats, PL_Thresh):
     """ Apply filters for the normalized Phred Quality Scores for
         AA, AB, BB genotypes where A = reference allele,
                                    B = alternate allele
-                                   
+
         Parameters
         ----------
         stats: GT:AD:DP:GQ:PL values
@@ -184,7 +185,7 @@ def PhredScaleFilter_HOMOREF(stats, PL_Thresh):
     """ Apply filters for the normalized Phred Quality Scores for
         AA, AB, BB genotypes where A = reference allele,
                                    B = alternate allele
-                                   
+
         Parameters
         ----------
         stats: GT:AD:DP:GQ:PL values
@@ -214,7 +215,7 @@ def PhredScaleFilter_HOMOALT(stats, PL_Thresh):
     """ Apply filters for the normalized Phred Quality Scores for
         AA, AB, BB genotypes where A = reference allele,
                                    B = alternate allele
-                                   
+
         Parameters
         ----------
         stats: GT:AD:DP:GQ:PL values
