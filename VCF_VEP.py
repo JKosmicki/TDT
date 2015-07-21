@@ -2,27 +2,27 @@
 """
 :File:         VCF_VEP.py
 :OriginalAuthor:   Kamil Slowikowski <kslowikowski@fas.harvard.edu>
-:Edited:       Jack Kosmicki
-:Last updated: February 25, 2015
+:Edited:       Jack A. Kosmicki
+:Last updated: 2015-07-14
 
-Make life with VCF files easier.
+Read in a line from a VCF and return a hash table with the columns of the VCF as keys
+    and the records for each variant as the values.  The info field is broken up into
+    key value pairs.
+Hence, vcfLine['CHROM'] will return the chromosome the variant is on.
 
-Usage example:
-
-    >>> import VCF
-    >>> variants = list(VCF.lines('file.vcf.gz'))
-    >>> print [v['CHROM'] for v in variants[:3]]
-    [1, 1, 1]
+Note:
+vcf lines that do not pass GATK filters will not be processed nor are multi-allelic variants.
 """
 
 
 import gzip
 import sys
+from sets import Set
 
 
 def parse(line, hashTable):
-    """Parse a single VCF line and return a dictionary. 
-    
+    """Parse a single VCF line and return a dictionary.
+
     Parameters
     ----------
     line: a line in the VCF (string)
@@ -52,7 +52,7 @@ def parse(line, hashTable):
     vcfLine['QUAL'] = FIELDS[5]
 
     # VCF file format must be GT:AD:DP:GQ:PL
-    if FIELDS[8] != 'GT:AD:DP:GQ:PL':
+    if not checkFORMAT(FIELDS[8]):
         return None
     else:
         format = FIELDS[8].split(':')
@@ -83,8 +83,7 @@ def parse(line, hashTable):
         # indivAttr (individual attributes) are GT:AD:DP:GQ:PL
         indivAttr = fields[hashTable[indivID]].strip('"').split(':')
 
-        # If the sizes don't match, the individual has missing values 
-        # in the format field.
+        # If the sizes don't match, the individual has missing values in the format field.
         # i.e., format = GT:AD:DP and indivAttr = ./.
         if len(indivAttr) != format_len:
             vcfLine[indivID] = None
@@ -105,13 +104,11 @@ def parse(line, hashTable):
             else:
                 vcfLine[indivID] = None
 
-            vcfLine[indivID] = stats
-
     return vcfLine
 
 
 def find_gtype(stats):
-    """ Determine the genotype of the individual by checking both 
+    """ Determine the genotype of the individual by checking both
         the genotype and AD.
 
     Parameters
@@ -121,6 +118,7 @@ def find_gtype(stats):
 
     # Throw away individuals with 0 reference and alternate reads.
     if stats['AD'][0] == 0 and stats['AD'][1] == 0:
+        print 'AD field is 0,0', stats
         return None
     elif stats['GT'] in ('0/0', '0|0'):
         return 'homoRef'
@@ -129,4 +127,40 @@ def find_gtype(stats):
     elif stats['GT'] in ('1/1', '1|1'):
         return 'homoAlt'
     else:
+        print 'returned last option of none', stats
         return None
+
+
+def checkFORMAT(formatField):
+    """ This program requires the following values in the FORMAT field:
+        GT: genotype
+        AD: allelic depth
+        DP: total read depth
+        GQ: Genotype Quality
+        PL: Phred-scaled likelihoods
+
+        If any of these fields are missing then the line cannot be read.
+
+        Parameters
+        ----------
+        formatField: (: delimited string) 9th column of the vcf.
+    """
+
+    format = Set(formatField.split(':'))
+    if 'GT' not in format:
+        sys.stderr.write('WARNING: GT not in format field.')
+        return False
+    elif 'AD' not in format:
+        sys.stderr.write('WARNING: AD not in format field.')
+        return False
+    elif 'DP' not in format:
+        sys.stderr.write('WARNING: DP not in format field.')
+        return False
+    elif 'GQ' not in format:
+        sys.stderr.write('WARNING: GQ not in format field.')
+        return False
+    elif 'PL' not in format:
+        sys.stderr.write('WARNING: PL not in format field.')
+        return False
+    else:
+        return True
